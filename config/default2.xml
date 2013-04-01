@@ -1,0 +1,19 @@
+<network>
+  <name>default2</name>
+  <forward mode='nat'/>
+  <bridge name='virbr2' stp='on' delay='0' />
+  <dns>
+    <src service='dns-name' protocol='tcp'  target='.' port='1024' />
+    <host ip="192.168.123.228">
+        <hostname>libvirt-1-inside2</hostname>
+    </host>
+
+  </dns>
+  <ip address='192.168.123.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.123.2' end='192.168.123.254' />
+      <host name="libvirt-1-inside" ip="192.168.123.227" />
+    </dhcp>
+  </ip>
+</network>
+
