@@ -233,6 +233,6 @@ if __name__ == '__main__' :
     username = 'ot32em'
 #    vm_name = 'ot32em-1-1'
     config = { 'cpu':'1', 'memory':'512', 'disk':'8' }
-    for i in range(1,2,1):
+    for i in range(1,4,1):
         create_gentoo( username, 1, i, config ) 
     
