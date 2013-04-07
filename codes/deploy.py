@@ -78,7 +78,7 @@ class BootGroupVm(object):
 
     def download_image(self, prototype, download_dir, method):
         self.logger.debug('Start method: download_image of prototype [%s], download_dir[%s], and method[%s]' % \
-                          self.config.prototype_dir_names(prototype), download_dir, method)
+                          self.config.prototype_dir_name(prototype), download_dir, method)
         os.makedirs(download_dir)
         if method == DOWNLOAD_METHOD_UNICAST:
             # directly download
@@ -171,7 +171,7 @@ class BootVmConfig:
         self._repository_url = config['repository_url']
 
         self._use_kernel_map = config['use_kernel']
-        self.prototype_dir_names = config['prototype_dir_names']
+        self._prototype_dir_names = config['prototype_dir_names']
 
         self.RESOURCE_PROTOTYPE = 0
         self.RESOURCE_KERNEL = 1
@@ -201,7 +201,7 @@ class BootVmConfig:
         return self._libvirt_connection_uri
 
     def prototype_dir_name(self, prototype):
-        return self.prototype_dir_names[prototype]
+        return self._prototype_dir_names[prototype]
 
     def deploy_prototype_fullpath(self, prototype):
         return os.path.join(self._user_data_dir, self.prototype_dir_name(prototype))
