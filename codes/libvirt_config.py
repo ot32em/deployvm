@@ -1,5 +1,5 @@
 from xml.etree.ElementTree import Element, ElementTree, SubElement, dump, tostring
-
+from constant import *
 
 
 def make_xen_domain_node(vm_name, vm_cpu, vm_memory, vm_image_fullpath, vm_kernel_fullpath):
@@ -87,3 +87,16 @@ def make_xen_libvirt_config(xml_fullpath, vm_name, vm_cpu, vm_memory, vm_image_f
     indent(domain)
     tree = ElementTree( domain )
     tree.write(xml_fullpath)
+
+def make_kvm_libvirt_config(xml_fullpath, vm_name, vm_cpu, vm_memory, vm_image_fullpath, vm_kernel_fullpath):
+    domain = make_xen_domain_node(vm_name, vm_cpu, vm_memory, vm_image_fullpath, vm_kernel_fullpath)
+    indent(domain)
+    tree = ElementTree( domain )
+    tree.write(xml_fullpath)
+
+def make_libvirt_config( hypervisor_type, xml_fullpath, vm_name, vm_cpu, vm_memory, vm_image_fullpath, vm_kernel_fullpath):
+   if hypervisor_type == HYPERVISOR_TYPE_XEN:
+       make_xen_libvirt_config( xml_fullpath, vm_name, vm_cpu, vm_memory, vm_image_fullpath, vm_kernel_fullpath)
+   elif hypervisor_type == HYPERVISOR_TYPE_KVM :
+       make_kvm_libvirt_config( xml_fullpath, vm_name, vm_cpu, vm_memory, vm_image_fullpath, vm_kernel_fullpath)
+

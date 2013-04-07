@@ -1,43 +1,59 @@
-DOWNLOAD_METHOD_BT = DOWNLOAD_METHOD_BITTORRENT = 0
-DOWNLOAD_METHOD_UNICAST = DOWNLOAD_METHOD_UNI = 1
-download_method='unicast'
-hypervisor = "xen"
+from constant import *
+download_method = DOWNLOAD_METHOD_UNICAST
+hypervisor_type = HYPERVISOR_TYPE_XEN
+libvirt_connection_uri = 'xen:///'
 
 deploy_root="/var/www/localhost/htdocs/vm/cloud/"
 deploy_user_data_dir = deploy_root + "user_data/"
 download_dir = deploy_root + "tmp/download/"
 
 repository_url="http://192.168.31.168/vm/"
-repository_prototype_url = repository_url + 'prototype/'
-repository_kernel_url = repository_url + 'kernel/'
-repository_torrent_url = repository_url + 'torrent/'
+repository_prototype_dirname = 'prototype/'
+repository_kernel_dirname = 'kernel/'
+repository_torrent_dirname = 'torrent/'
 
 
 ''' vm image setting '''
-prototype_filenames = { 'gentoo' : "gentoo-prototype.img",
-                        'ubuntu' : "ubuntu-prototype.img",
-                        'hadoop-master' : "hadoop-master-prototype.img",
-                        'hadoop-slave' : "hadoop-slave-prototype.img",
-                        'apache' : "apache.img" 
+prototype_filenames = {
+    PROTOTYPE_GENTOO: 'gentoo-prototype.img',
+    PROTOTYPE_UBUNTU_12_04 : "ubuntu-prototype.img",
+    PROTOTYPE_HADOOP_MASTER : "hadoop-master-prototype.img",
+    PROTOTYPE_HADOOP_SLAVE : "hadoop-slave-prototype.img",
+    PROTOTYPE_APACHE : "apache.img",
+    PROTOTYPE_UBUNTU_9_04 : 'N/A',
 }
 
-use_kernel = { 'gentoo' : '3.7',
-               'ubuntu' : '3.7',
-               'hadoop-master' : '3.7',
-               'hadoop-slave' : '3.7',
-               'apache' : '3.7',
-               'ubuntu9' : '2.6'
+prototype_dir_names = {
+    PROTOTYPE_GENTOO: 'gentoo',
+    PROTOTYPE_UBUNTU_12_04 : 'ubuntu',
+    PROTOTYPE_HADOOP_MASTER : 'hadoop',
+    PROTOTYPE_HADOOP_SLAVE : 'hadoop',
+    PROTOTYPE_APACHE : "apache",
+    PROTOTYPE_UBUNTU_9_04 : 'ubuntu',
+}
+
+use_kernel = {
+    PROTOTYPE_GENTOO: KERNEL_VERSION_3_7,
+    PROTOTYPE_UBUNTU_12_04 : KERNEL_VERSION_3_7,
+    PROTOTYPE_HADOOP_MASTER : KERNEL_VERSION_3_7,
+    PROTOTYPE_HADOOP_SLAVE : KERNEL_VERSION_3_7,
+    PROTOTYPE_APACHE : KERNEL_VERSION_3_7,
+    PROTOTYPE_UBUNTU_9_04 :KERNEL_VERSION_2_6,
 }
 
 ''' vm kernel setting '''
-kernel_filenames = { '2.6':'kernel-2.6.img',
-                     '3.7':'kernel-2.7.img'}
+kernel_filenames = {
+    KERNEL_VERSION_2_6 : 'kernel-2.6.img',
+    KERNEL_VERSION_3_7 : 'kernel-2.7.img',
+}
 
 ''' prototype_uris, kernel_uris, os_types, kernel_types will be assigned at load_config '''
 
-torrent_filenames = {'gentoo' : 'gentoo-prototype.torrent',
-                     'ubuntu' : 'ubuntu-prototype.torrent',
-                     'hadoop-master' : 'hadoop-master.torrent',
-                     'hadoop-slave' : 'hadoop-slave.torrent',
-                     'apache' : 'apache.torrent'}
+torrent_filenames = {
+    PROTOTYPE_GENTOO : 'gentoo-prototype.torrent',
+    PROTOTYPE_UBUNTU_12_04 : 'ubuntu-prototype.torrent',
+    PROTOTYPE_HADOOP_MASTER : 'hadoop-master.torrent',
+    PROTOTYPE_HADOOP_SLAVE : 'hadoop-slave.torrent',
+    PROTOTYPE_APACHE : 'apache.torrent',
+}
 

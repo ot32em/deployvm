@@ -4,6 +4,7 @@ import time
 import sys
 import tempfile
 import shutil
+import os
 
 
 def unicast_download( url, save_dir='./', chunk_size=10*1024*1024 ): # 10 MB chunk size for default setting
