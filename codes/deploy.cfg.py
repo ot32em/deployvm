@@ -1,4 +1,8 @@
 from constant import *
+import logging
+
+log_level = logging.DEBUG
+
 download_method = DOWNLOAD_METHOD_UNICAST
 hypervisor_type = HYPERVISOR_TYPE_XEN
 libvirt_connection_uri = 'xen:///'

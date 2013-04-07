@@ -13,11 +13,21 @@ from GroupVm import GroupVm
 import download
 import shutil
 from constant import *
+import logging
 
 
 class BootGroupVm(object):
     def __init__(self, config_filename):
         self.config = BootVmConfig(config_filename)
+        self.setup_logger( config_filename)
+
+    def setup_logger(self, logger_filename):
+        self.logger = logging.getLogger( logger_filename)
+        file_handler = logging.FileHandler( './log/' + logger_filename + '.log')
+        file_handler.setLevel(logging.INFO)
+        stream_handler = logging.StreamHandler()
+        self.logger.addHandler(file_handler)
+        self.logger.addHandler(stream_handler)
 
     def boot(self, username, groupid, vms_parameters, boot_depend):
         group_vm = GroupVm(username, groupid, vms_parameters)
@@ -52,6 +62,7 @@ class BootGroupVm(object):
         return os.path.join(self.config.download_dir(), group_vm.group_name())
 
     def download_images(self, group_vm):
+        self.logger.debug('Start method: download_images of Group VM[%s]' % group_vm.group_name())
         method = self.config.download_method()
         unique_prototypes = group_vm.unique_prototypes()
         download_dir = self.group_vm_download_dir(group_vm)
@@ -66,6 +77,8 @@ class BootGroupVm(object):
             download.unicast_download(kernel_url, download_dir)
 
     def download_image(self, prototype, download_dir, method):
+        self.logger.debug('Start method: download_image of prototype [%s], download_dir[%s], and method[%s]' % \
+                          self.config.prototype_dir_names(prototype), download_dir, method)
         os.makedirs(download_dir)
         if method == DOWNLOAD_METHOD_UNICAST:
             # directly download
@@ -79,12 +92,14 @@ class BootGroupVm(object):
             download.bt_download(torrent_path, download_dir)
 
     def make_directories(self, group_vm):
+        self.logger.debug('Start method: make_directries of Group VM[%s]' % group_vm.group_name())
         for subid in group_vm.subids():
             vm_dir_fullpath = self.vm_dir_fullpath(group_vm, subid)
             if not os.path.exists(vm_dir_fullpath):
                 os.makedirs(vm_dir_fullpath)
 
     def copy_images(self, group_vm):
+        self.logger.debug('Start method: copy_images of Group VM[%s]' % group_vm.group_name())
         download_dir = self.group_vm_download_dir(group_vm)
         for subid in group_vm.subids():
             vm_dir_fullpath = self.vm_dir_fullpath(group_vm, subid)
@@ -101,6 +116,7 @@ class BootGroupVm(object):
             shutil.copy2(kernel_src_fullpath, kernel_dest_fullpath)
 
     def resize_images(self, group_vm):
+        self.logger.debug('Start method: resize_images of Group VM[%s]' % group_vm.group_name())
         for subid in group_vm.subids():
             prototype_filename = self.config.prototype_filename(group_vm.vm_prototype(subid))
             vm_dir_fullpath = self.vm_dir_fullpath(group_vm, subid)
@@ -110,6 +126,7 @@ class BootGroupVm(object):
             os.system(cmd)
 
     def make_libvirt_xmls(self, group_vm):
+        self.logger.debug('Start method: make_libvirt_xmls of Group VM[%s]' % group_vm.group_name())
         hypervisor_type = self.config.hypervisor_type()
         for subid in group_vm.subids():
             prototype = group_vm.vm_prototype(subid)
@@ -124,13 +141,17 @@ class BootGroupVm(object):
                                                image_fullpath, kernel_fullpath)
 
     def boot_vm(self, xml_fullpath):
+        self.logger.debug('Start method: boot_vm of xml fullpath[%s]' % xml_fullpath())
         session = libvirt.open(self.config.libvirt_connection_uri())
         with open(xml_fullpath, 'r') as f:
             xml_desc = f.read()
         domain = session.domainCreateXml(xml_desc, libvirt.VIR_DOMAIN_NONE)
+        if not domain:
+            self.logger.warning('Booting failed... with xml file [%s]' % xml_fullpath)
         return domain is not None
 
     def post_booting(self, group_vm):
+        self.logger.debug('Start method: post_booting of Group VM[%s]' % group_vm.group_name())
         pass
 
 
