@@ -1,12 +1,11 @@
 import os
 
 class GroupVm:
-    def __init__(self, username, groupid, subids, vms_parameters):
+    def __init__(self, username, groupid, vms_parameters):
         self._username = username
         self._groupid = groupid
-        self._subids = subids
-
         self._vms_parameters = vms_parameters
+        self._subids = vms_parameters.keys()
 
     def username(self):
         return self._username
