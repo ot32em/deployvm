@@ -37,7 +37,7 @@ class GroupVm:
 
     def unique_prototypes(self):
         prototypes = set()
-        for subid in self.vms_parameters :
+        for subid in self._vms_parameters :
             prototypes.add( self.vm_prototype( subid ) )
         return list(prototypes) # set type will kick the same contents
 
