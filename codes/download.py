@@ -57,13 +57,13 @@ def bt_download( torrent_location, save_dir='./', seeding_time=0, debug=False, v
     info = lt.torrent_info( filename )
     h = ses.add_torrent({'ti': info, 'save_path': save_dir })
 
-    if debug || verbose :
+    if debug or verbose :
         print( 'starting', h.name() )
 
     while (not h.is_seed() or seeding_time > 0):
         s = h.status()
 
-        if debug || verbose :
+        if debug or verbose :
             state_str = ['queued', 'checking', 'downloading metadata', \
                 'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
             print( '\r%.2f%% complete (down: %.1f kb/s up: %.1f kB/s peers: %d) %s' % \
@@ -76,7 +76,7 @@ def bt_download( torrent_location, save_dir='./', seeding_time=0, debug=False, v
 
         time.sleep(1)
 
-    if debug || verbose :
+    if debug or verbose :
         print( h.name(), 'complete' )
 
     if is_url and os.path.exists( tmp_dir ):
