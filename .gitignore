@@ -3,4 +3,5 @@ prototype/*
 vms/*
 cloud/*
 ubuntu/*
-
+*.img
+.idea/*
