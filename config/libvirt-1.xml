@@ -6,7 +6,7 @@
   <hostname>libvirt-1-hostname-xml</hostname>
   <os>
     <type arch='x86_64' machine='xenpv'>linux</type>
-    <kernel>/root/vm/vmlinux-gentoo-3.7-blktap-patch.new</kernel>
+    <kernel>/root/vm/kernel/gentoo-kernel.img</kernel>
     <cmdline>root=/dev/xvda1 ip=::::libvirt-1-hostname::dhcp</cmdline>
   </os>
   <clock offset='utc' adjustment='reset'/>
