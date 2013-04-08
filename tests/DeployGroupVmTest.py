@@ -105,7 +105,7 @@ class DeployTest(unittest.TestCase):
     def test_boot(self):
         g = self.sample_group_vm
         d = self.dgv
-        d.boot(g,[1,2])
+        d.boot(g,[[1,2]])
 
         s = libvirt.open(d.config().libvirt_connection_uri())
         names = d.libvirt_running_names()

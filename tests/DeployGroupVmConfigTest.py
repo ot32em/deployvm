@@ -66,13 +66,13 @@ class DeployGroupVmConfigTest(unittest.TestCase):
 
     def test_torrent_url(self):
         t = {
-            'kernel_filenames': {
+            'torrent_filenames': {
                 PROTOTYPE_GENTOO: 'haha.torrent',
             },
             'repository_url': 'http://www.google.com',
             'repository_torrent_dirname': 'files/no1/2012/torrents',
         }
-        expected = t['repository_url'] +'/'+t['repository_torrent_dirname']+'/'+t['kernel_filenames'][PROTOTYPE_GENTOO]
+        expected = t['repository_url'] + '/' + t['repository_torrent_dirname'] + '/' + t['torrent_filenames'][PROTOTYPE_GENTOO]
         self.c.overwrite(t)
         result = self.c.torrent_url(PROTOTYPE_GENTOO)
         self.assertEqual( expected, result)

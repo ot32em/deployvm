@@ -215,6 +215,8 @@ class DeployGroupVm(object):
             vm_dir_fullpath = self.vm_dir(group_vm, subid)
             new_size = group_vm.vm_disk(subid)
             prototype_fullpath = os.path.join(vm_dir_fullpath, prototype_filename)
+            cmd = "e2fsck -f " + prototype_fullpath
+            os.system(cmd)
             cmd = "resize2fs {image} {GBs}G".format(image=prototype_fullpath, GBs=new_size)
             os.system(cmd)
 
