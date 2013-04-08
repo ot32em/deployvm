@@ -127,6 +127,10 @@ class BootGroupVm(object):
         return failed_dir
 
     def vm_dir(self, group_vm, subid):
+        '''
+        @type group_vm GroupVm
+        @type subid int
+        '''
         prototype = group_vm.vm_prototype(subid)
         deploy_prototype_fullpath = self.config().deploy_prototype_dir(prototype)
         return group_vm.vm_dir(deploy_prototype_fullpath, subid)

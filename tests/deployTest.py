@@ -47,7 +47,7 @@ class DeployTest(unittest.TestCase):
             prototype = self.c.prototype_filename(self.g.vm_prototype(subid)),
             username = self.g.username(),
             vm_name = self.g.vm_name(subid) )
-            self.assertEqual( expected_vm_dir, self.b.vm_dir(self.g.groupid(), subid))
+            self.assertEqual( expected_vm_dir, self.b.vm_dir(self.g, subid))
 
     def test_group_vm_download_dir(self):
         expected_dir = '{download_dir}/{group_name}'.format(
