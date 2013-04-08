@@ -8,14 +8,14 @@ hypervisor_type = HYPERVISOR_TYPE_XEN
 libvirt_connection_uri = 'xen:///'
 
 deploy_root="/var/www/localhost/htdocs/vm/cloud/"
-user_data_dirname = "user_data/"
-download_dirname = "tmp/download/"
-failed_log_dirname = "failed_log/"
+user_data_dirname = "user_data"
+download_dirname = "tmp/download"
+failed_log_dirname = "failed_log"
 
-repository_url="http://140.112.31.168/vm/"
-repository_prototype_dirname = 'prototype/'
-repository_kernel_dirname = 'kernel/'
-repository_torrent_dirname = 'torrent/'
+repository_url="http://140.112.31.168/vm"
+repository_prototype_dirname = 'prototype'
+repository_kernel_dirname = 'kernel'
+repository_torrent_dirname = 'torrent'
 
 
 ''' vm image setting '''
