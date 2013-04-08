@@ -38,6 +38,11 @@ class BootGroupVm(object):
 
 
     def boot(self, group_vm, boot_depend):
+        '''
+        @ type group_vm GroupVM
+        @ type boot_depend list
+        '''
+
         # Downloading Big Files: Prototype image, usually 500MB~3000MB via bt or unicast, then deploy to each vm folder
         # via local copying files .
         self.download_images(group_vm)
@@ -71,7 +76,7 @@ class BootGroupVm(object):
         for subid in group_vm.subids():
             vm_dir = self.vm_dir(group_vm, subid)
             # mv libvirt config to fail_boot_log/timestamp-groupname-backup
-            xml_filename = group_vm.vm_name() + '.xml'
+            xml_filename = group_vm.vm_name(subid) + '.xml'
             xml_filepath = os.path.join(vm_dir, xml_filename)
             if os.path.exists(xml_filepath):
                 self.logger.debug("VM libvirt xml[%s] was found. Ready to backup it." % (xml_filename))
