@@ -4,6 +4,14 @@ from constant import *
 import unittest
 import os
 
+
+class ConfigTest(unittest.TestCase):
+    def setUp(self):
+        pass
+    def testHi(self):
+        self.assertTrue(True)
+
+
 class DeployTest(unittest.TestCase):
 
     def setUp(self):
