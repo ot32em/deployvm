@@ -11,7 +11,7 @@ deploy_root="/var/www/localhost/htdocs/vm/cloud/"
 deploy_user_data_dir = deploy_root + "user_data/"
 download_dir = deploy_root + "tmp/download/"
 
-repository_url="http://192.168.31.168/vm/"
+repository_url="http://140.112.31.168/vm/"
 repository_prototype_dirname = 'prototype/'
 repository_kernel_dirname = 'kernel/'
 repository_torrent_dirname = 'torrent/'
@@ -19,8 +19,8 @@ repository_torrent_dirname = 'torrent/'
 
 ''' vm image setting '''
 prototype_filenames = {
-    PROTOTYPE_GENTOO: 'gentoo-prototype.img',
-    PROTOTYPE_UBUNTU_12_04 : "ubuntu-prototype.img",
+    PROTOTYPE_GENTOO: '1mb.img', #'gentoo-prototype.img',
+    PROTOTYPE_UBUNTU_12_04 : '1mb.img', #"ubuntu-prototype.img",
     PROTOTYPE_HADOOP_MASTER : "hadoop-master-prototype.img",
     PROTOTYPE_HADOOP_SLAVE : "hadoop-slave-prototype.img",
     PROTOTYPE_APACHE : "apache.img",
@@ -48,7 +48,7 @@ use_kernel = {
 ''' vm kernel setting '''
 kernel_filenames = {
     KERNEL_VERSION_2_6 : 'kernel-2.6.img',
-    KERNEL_VERSION_3_7 : 'kernel-2.7.img',
+    KERNEL_VERSION_3_7 : 'kernel-3.7.img',
 }
 
 ''' prototype_uris, kernel_uris, os_types, kernel_types will be assigned at load_config '''

@@ -23,6 +23,7 @@ class BootGroupVm(object):
 
     def setup_logger(self, logger_filename):
         self.logger = logging.getLogger( logger_filename)
+        self.logger.setLevel( self.config.log_level() )
         file_handler = logging.FileHandler( './log/' + logger_filename + '.log')
         file_handler.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler()
@@ -78,16 +79,18 @@ class BootGroupVm(object):
 
     def download_image(self, prototype, download_dir, method):
         self.logger.debug('Start method: download_image of prototype [%s], download_dir[%s], and method[%s]' % \
-                          self.config.prototype_dir_name(prototype), download_dir, method)
-        os.makedirs(download_dir)
+                          ( self.config.prototype_dir_name(prototype), download_dir, method) )
+        if not os.path.exists( download_dir ):
+            self.logger.debug("Directory[%s] does not exist, ready to mkdir it" % download_dir )
+            os.makedirs(download_dir)
         if method == DOWNLOAD_METHOD_UNICAST:
             # directly download
             url = self.config.prototype_url(prototype)
-            download.unicast_download(url, download_dir)
+            download.unicast_download(url, download_dir, debug=True)
         elif method == DOWNLOAD_METHOD_BITTORRENT:
             # get the torrent, then download via bittorrent
             torrent_url = self.config.torrent_url(prototype)
-            download.unicast_download(torrent_url, download_dir)
+            download.unicast_download(torrent_url, download_dir, debug=True)
             torrent_path = os.path.join(download_dir, self.config.torrent_filename(prototype))
             download.bt_download(torrent_path, download_dir)
 
@@ -141,11 +144,11 @@ class BootGroupVm(object):
                                                image_fullpath, kernel_fullpath)
 
     def boot_vm(self, xml_fullpath):
-        self.logger.debug('Start method: boot_vm of xml fullpath[%s]' % xml_fullpath())
+        self.logger.debug('Start method: boot_vm of xml fullpath[%s]' % xml_fullpath)
         session = libvirt.open(self.config.libvirt_connection_uri())
         with open(xml_fullpath, 'r') as f:
             xml_desc = f.read()
-        domain = session.domainCreateXml(xml_desc, libvirt.VIR_DOMAIN_NONE)
+        domain = session.createXML(xml_desc, libvirt.VIR_DOMAIN_NONE)
         if not domain:
             self.logger.warning('Booting failed... with xml file [%s]' % xml_fullpath)
         return domain is not None
@@ -160,6 +163,8 @@ class BootVmConfig:
         config = helper.load_variables(config_filename)
         self.config_filename = config_filename
         self.config_variable = config
+
+        self._log_level = config['log_level']
 
         self._hypervisor_type = config['hypervisor_type']
         self._libvirt_connection_uri = config['libvirt_connection_uri']
@@ -187,6 +192,9 @@ class BootVmConfig:
             self.RESOURCE_KERNEL: config['kernel_filenames'],
             self.RESOURCE_TORRENT: config['torrent_filenames'],
         }
+
+    def log_level(self):
+        return self._log_level
 
     def download_dir(self):
         return self._download_dir

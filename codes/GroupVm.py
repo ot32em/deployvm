@@ -24,7 +24,7 @@ class GroupVm:
         return self._vms_parameters[subid]['disk']
 
     def vm_name(self, subid):
-        return '%s-%i-%i' % (self._username, self._groupid, subid)
+        return '%s-%s-%s' % (self.username(), self.groupid(), subid)
 
     def group_name(self):
         return '%s-%s' % (self._username, self._groupid)
