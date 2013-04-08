@@ -73,6 +73,7 @@ class BootGroupVm(object):
             os.makedirs(failed_dir)
         self.logger.debug("Failed records will be created under the folder: %s" % failed_dir )
 
+        running_names = self.libvirt_running_names()
         for subid in group_vm.subids():
             vm_dir = self.vm_dir(group_vm, subid)
             # mv libvirt config to fail_boot_log/timestamp-groupname-backup
@@ -90,13 +91,24 @@ class BootGroupVm(object):
 
             # destroy vm
             vm_name = group_vm.vm_name(subid)
-            try:
-                session = libvirt.open(self.config().libvirt_connection_uri())
-                d = session.lookupByName(vm_name)
-                d.destroy()
-                self.logger.debug("VM %s has beend destroied." % vm_name )
-            except libvirt.libvirtError:
-                pass
+            if vm_name in running_names:
+                try:
+                    session = libvirt.open(self.config().libvirt_connection_uri())
+                    d = session.lookupByName(vm_name)
+                    d.destroy()
+                    self.logger.debug("VM %s has beend destroied." % vm_name )
+                except libvirt.libvirtError:
+                    pass
+
+    def libvirt_running_names(self):
+        names = []
+        s = libvirt.open(self.config().libvirt_connection_uri())
+        for vid in s.listDomainsID():
+            v = s.lookupByID(vid)
+            names.append(v.name())
+        return names
+
+
 
     def failed_log_dirname(self, group_vm):
         timestamp = time.strftime("%y%m%d-%H:%M:%S")
