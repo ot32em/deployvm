@@ -7,6 +7,7 @@ import helper
 import tempfile
 import libvirt_config
 import libvirt
+import shutil
 
 
 
@@ -108,12 +109,17 @@ class DeployTest(unittest.TestCase):
 
         s = libvirt.open(d.config().libvirt_connection_uri())
         names = d.libvirt_running_names()
+        download_dir = d.group_download_dir(g)
+        shutil.rmtree(download_dir)
         for subid in g.subids():
             name = g.vm_name(subid)
             self.assertIn(name, names)
             if name in names:
                 domain = s.lookupByName(name)
                 domain.destroy()
+            vm_dir = d.vm_dir(g, subid)
+            shutil.rmtree(vm_dir)
+
 
     def test_post_booting(self):
         pass
