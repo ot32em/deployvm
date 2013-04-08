@@ -2,6 +2,7 @@ import deploy
 import GroupVm
 from constant import *
 import unittest
+import os
 
 class DeployTest(unittest.TestCase):
 
@@ -57,7 +58,15 @@ class DeployTest(unittest.TestCase):
         self.assertEqual( expected_dir, self.b.group_vm_download_dir(self.g))
 
     def test_download_image(self):
-        pass
+        for subid in self.g.subids():
+            prototype = self.g.vm_prototype(subid)
+            download_dir = self.b.group_vm_download_dir(self.g)
+            method = self.c.download_method()
+            prototype_filename = self.c.prototype_filename(prototype)
+            self.b.download_image(prototype, download_dir, method)
+            expected_filepath = os.path.join(download_dir, prototype_filename)
+            self.assertTrue( os.path.exists( expected_filepath ))
+
 
     def test_make_directories(self):
         pass
