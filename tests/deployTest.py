@@ -44,7 +44,7 @@ class DeployTest(unittest.TestCase):
         for subid in self.g.subids():
             expected_vm_dir = '{userdata_dir}/{prototype}/{username}/{vm_name}'.format(
             userdata_dir = self.c.user_data_dir(),
-            prototype = self.c.prototype_filename(self.g.vm_prototype(subid)),
+            prototype = self.c.prototype_name(self.g.vm_prototype(subid)),
             username = self.g.username(),
             vm_name = self.g.vm_name(subid) )
             self.assertEqual( expected_vm_dir, self.b.vm_dir(self.g, subid))
