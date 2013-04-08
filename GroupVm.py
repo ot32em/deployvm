@@ -32,7 +32,7 @@ class GroupVm:
         return self.group_name() + '-'
 
 
-    def vm_dir_fullpath(self, deploy_prototype_fullpath, subid):
+    def vm_dir(self, deploy_prototype_fullpath, subid):
         return os.path.join( deploy_prototype_fullpath, self.username(), self.vm_name(subid))
 
     def unique_prototypes(self):
