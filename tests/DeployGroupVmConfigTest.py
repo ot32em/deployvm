@@ -53,3 +53,30 @@ class DeployGroupVmConfigTest(unittest.TestCase):
         self.assertEqual( self.c.deploy_dir(), t['deploy_root'])
         self.assertEqual( self.c.repository_url(), t['repository_url'])
 
+    def test_kernel(self):
+        t = {
+            'use_kernel': {
+                PROTOTYPE_GENTOO: KERNEL_VERSION_2_6,
+                PROTOTYPE_UBUNTU_12_04: KERNEL_VERSION_3_7,
+            }
+        }
+        self.c.overwrite(t)
+        self.assertEqual(KERNEL_VERSION_2_6, self.c.kernel_version(PROTOTYPE_GENTOO))
+        self.assertEqual(KERNEL_VERSION_3_7, self.c.kernel_version(PROTOTYPE_UBUNTU_12_04))
+
+    def test_torrent_url(self):
+        t = {
+            'kernel_filenames': {
+                PROTOTYPE_GENTOO: 'haha.torrent',
+            },
+            'repository_url': 'http://www.google.com',
+            'repository_torrent_dirname': 'files/no1/2012/torrents',
+        }
+        expected = t['repository_url'] +'/'+t['repository_torrent_dirname']+'/'+t['kernel_filenames'][PROTOTYPE_GENTOO]
+        self.c.overwrite(t)
+        result = self.c.torrent_url(PROTOTYPE_GENTOO)
+        self.assertEqual( expected, result)
+
+
+
+
