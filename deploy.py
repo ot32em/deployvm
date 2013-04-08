@@ -30,8 +30,9 @@ class BootGroupVm(object):
         file_handler = logging.FileHandler('./log/' + logger_filename + '.log')
         file_handler.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler()
-        self.logger.addHandler(file_handler)
-        self.logger.addHandler(stream_handler)
+        stream_handler.setLevel(logging.ERROR)
+#        self.logger.addHandler(file_handler)
+#        self.logger.addHandler(stream_handler)
 
     def config(self):
         return self._config
