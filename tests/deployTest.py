@@ -60,23 +60,23 @@ class DeployTest(unittest.TestCase):
         self.assertEqual( expected_dir, self.b.group_vm_download_dir(self.g))
 
     def test_download_image(self):
-        assert False
+        self.assertFalse()
 
     def test_make_directories(self):
-        assert False
+        self.assertFalse()
 
     def test_copy_images(self):
-        assert False
+        self.assertFalse()
 
 
     def test_resize_images(self):
-        assert False
+        self.assertFalse()
 
     def test_make_libvirt_xmls(self):
-        assert False
+        self.assertFalse()
 
     def test_boot_vm(self):
-        assert False
+        self.assertFalse()
 
     def test_post_booting(self):
-        assert False
+        self.assertFalse()
