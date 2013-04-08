@@ -236,7 +236,7 @@ class BootGroupVm(object):
 
 
 class BootVmConfig:
-    def __init__(self, config_filename):
+    def __init__(self, config_filename='deploy.cfg.py'):
         self.config_filename = config_filename
         self.config_dictionary = helper.load_variables(config_filename)
         self.load_dictionary()
