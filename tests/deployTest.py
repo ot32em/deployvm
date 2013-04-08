@@ -57,6 +57,13 @@ class DeployTest(unittest.TestCase):
         )
         self.assertEqual( expected_dir, self.b.group_vm_download_dir(self.g))
 
+    def test_config_prototype_url(self):
+        expected_url = 'http://140.112.31.168/vm/prototype/100mb.img'
+        result_url = self.c.prototype_url(PROTOTYPE_GENTOO)
+        self.assertEqual( expected_url, result_url)
+
+
+
     def test_download_image(self):
         for subid in self.g.subids():
             prototype = self.g.vm_prototype(subid)

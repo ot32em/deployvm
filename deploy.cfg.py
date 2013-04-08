@@ -1,7 +1,7 @@
 from constant import *
 import logging
 
-log_level = logging.DEBUG
+log_level = logging.ERROR
 
 download_method = DOWNLOAD_METHOD_UNICAST
 hypervisor_type = HYPERVISOR_TYPE_XEN
