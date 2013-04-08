@@ -10,7 +10,6 @@ import time
 import libvirt_config
 import libvirt
 import os
-from GroupVm import GroupVm
 import download
 import shutil
 from constant import *
@@ -19,23 +18,26 @@ import logging
 
 class BootGroupVm(object):
     def __init__(self, config_filename='deploy.cfg.py'):
-        self.config = BootVmConfig(config_filename)
+        self._config = BootVmConfig(config_filename)
         self.setup_logger(config_filename)
 
     def overwrite_config(self, new_dictionary):
-        self.config.overwrite(new_dictionary)
+        self.config().overwrite(new_dictionary)
 
     def setup_logger(self, logger_filename):
         self.logger = logging.getLogger( logger_filename)
-        self.logger.setLevel( self.config.log_level() )
+        self.logger.setLevel( self.config().log_level() )
         file_handler = logging.FileHandler('./log/' + logger_filename + '.log')
         file_handler.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler()
         self.logger.addHandler(file_handler)
         self.logger.addHandler(stream_handler)
 
-    def boot(self, username, groupid, vms_parameters, boot_depend):
-        group_vm = GroupVm(username, groupid, vms_parameters)
+    def config(self):
+        return self._config
+
+
+    def boot(self, group_vm, boot_depend):
         # Downloading Big Files: Prototype image, usually 500MB~3000MB via bt or unicast, then deploy to each vm folder
         # via local copying files .
         self.download_images(group_vm)
@@ -60,10 +62,10 @@ class BootGroupVm(object):
 
     def rollback(self, group_vm):
         self.logger.debug("Start to rollback.")
-        timestamp = time.strftime("%y%m%d %H:%M:%S")
-
-        failed_dirname = "%s-%s" % (timestamp, group_vm.group_name())
-        failed_dir = self.make_failed_log_dir(failed_dirname)
+        failed_dirname = self.failed_log_dirname(group_vm)
+        failed_dir = os.path.join( self.config().failed_log_dir(), failed_dirname)
+        if not os.path.exists(failed_dir):
+            os.mkdir(failed_dir)
         self.logger.debug("Failed records will be created under the folder: %s" % failed_dir )
 
         for subid in group_vm.subids():
@@ -72,8 +74,8 @@ class BootGroupVm(object):
             xml_filename = group_vm.vm_name() + '.xml'
             xml_filepath = os.path.join(vm_dir, xml_filename)
             if os.path.exists(xml_filepath):
-                self.logger.debug("VM libvirt xml[%s] was found. Ready to backup it." % (xml_filename, vm_dir, failed_dir))
-                shutil.move(xml_filepath, os.path.join( failed_dir, xml_filename))
+                self.logger.debug("VM libvirt xml[%s] was found. Ready to backup it." % (xml_filename))
+                shutil.move(xml_filepath, os.path.join(failed_dir, xml_filename))
                 self.logger.debug("Backuped vm libvirt xml[%s] from [%s] to [%s]" % (xml_filename, vm_dir, failed_dir))
             # delete and clear directory
             if os.path.exists(vm_dir):
@@ -84,60 +86,62 @@ class BootGroupVm(object):
             # destroy vm
             vm_name = group_vm.vm_name(subid)
             try:
-                session = libvirt.open(self.config.libvirt_connection_uri())
+                session = libvirt.open(self.config().libvirt_connection_uri())
                 d = session.lookupByName(vm_name)
                 d.destroy()
                 self.logger.debug("VM %s has beend destroied." % vm_name )
             except libvirt.libvirtError:
                 pass
 
-
+    def failed_log_dirname(self, group_vm):
+        timestamp = time.strftime("%y%m%d %H:%M:%S")
+        return "%s-%s" % (timestamp, group_vm.group_name())
 
 
     def make_failed_log_dir(self, dirname):
-        failed_dir = os.path.join(self.config.failed_log_dir(), dirname)
+        failed_dir = os.path.join(self.config().failed_log_dir(), dirname)
         if not os.path.exists(failed_dir):
             os.mkdir(failed_dir)
         return failed_dir
 
     def vm_dir(self, group_vm, subid):
         prototype = group_vm.vm_prototype(subid)
-        deploy_prototype_fullpath = self.config.deploy_prototype_dir(prototype)
+        deploy_prototype_fullpath = self.config().deploy_prototype_dir(prototype)
         return group_vm.vm_dir(deploy_prototype_fullpath, subid)
 
     def group_vm_download_dir(self, group_vm):
-        return os.path.join(self.config.download_dir(), group_vm.group_name())
+        return os.path.join(self.config().download_dir(), group_vm.group_name())
 
     def download_images(self, group_vm):
         self.logger.debug('Start method: download_images of Group VM[%s]' % group_vm.group_name())
-        method = self.config.download_method()
+        method = self.config().download_method()
         unique_prototypes = group_vm.unique_prototypes()
         download_dir = self.group_vm_download_dir(group_vm)
         # download prototypes
         unique_kernel_versions = set()
         for prototype in unique_prototypes:
             self.download_image(prototype, download_dir, method)
-            unique_kernel_versions.add(self.config.kernel_version(prototype))
+            unique_kernel_versions.add(self.config().kernel_version(prototype))
         # download kernels
         for kernel_version in unique_kernel_versions:
-            kernel_url = self.config.kernel_url_by_version(kernel_version)
+            kernel_url = self.config().kernel_url_by_version(kernel_version)
             download.unicast_download(kernel_url, download_dir)
 
     def download_image(self, prototype, download_dir, method):
         self.logger.debug('Start method: download_image of prototype [%s], download_dir[%s], and method[%s]' % \
-                          ( self.config.prototype_name(prototype), download_dir, method) )
+                          ( self.config().prototype_name(prototype), download_dir, method) )
         if not os.path.exists( download_dir ):
             self.logger.debug("Directory[%s] does not exist, ready to mkdir it" % download_dir)
             os.makedirs(download_dir)
         if method == DOWNLOAD_METHOD_UNICAST:
             # directly download
-            url = self.config.prototype_url(prototype)
+            url = self.config().prototype_url(prototype)
             download.unicast_download(url, download_dir, debug=True)
         elif method == DOWNLOAD_METHOD_BITTORRENT:
             # get the torrent, then download via bittorrent
-            torrent_url = self.config.torrent_url(prototype)
+            torrent_url = self.config().torrent_url(prototype)
             download.unicast_download(torrent_url, download_dir, debug=True)
-            torrent_path = os.path.join(download_dir, self.config.torrent_filename(prototype))
+            torrent_path = os.path.join(download_dir, self.config().torrent_filename(prototype))
             download.bt_download(torrent_path, download_dir)
 
     def make_directories(self, group_vm):
@@ -154,12 +158,12 @@ class BootGroupVm(object):
             vm_dir_fullpath = self.vm_dir(group_vm, subid)
             prototype = group_vm.vm_prototype(subid)
             # copy prototype image
-            prototype_filename = self.config.prototype_filename(prototype)
+            prototype_filename = self.config().prototype_filename(prototype)
             prototype_src_fullpath = os.path.join(download_dir, prototype_filename)
             prototype_dest_fullpath = os.path.join(vm_dir_fullpath, prototype_filename)
             shutil.copy2(prototype_src_fullpath, prototype_dest_fullpath)
             # copy kernel image
-            kernel_filename = self.config.kernel_filename(prototype)
+            kernel_filename = self.config().kernel_filename(prototype)
             kernel_src_fullpath = os.path.join(download_dir, kernel_filename)
             kernel_dest_fullpath = os.path.join(vm_dir_fullpath, kernel_filename)
             shutil.copy2(kernel_src_fullpath, kernel_dest_fullpath)
@@ -167,7 +171,7 @@ class BootGroupVm(object):
     def resize_images(self, group_vm):
         self.logger.debug('Start method: resize_images of Group VM[%s]' % group_vm.group_name())
         for subid in group_vm.subids():
-            prototype_filename = self.config.prototype_filename(group_vm.vm_prototype(subid))
+            prototype_filename = self.config().prototype_filename(group_vm.vm_prototype(subid))
             vm_dir_fullpath = self.vm_dir(group_vm, subid)
             new_size = group_vm.vm_disk(subid)
             prototype_fullpath = os.path.join(vm_dir_fullpath, prototype_filename)
@@ -176,22 +180,22 @@ class BootGroupVm(object):
 
     def make_libvirt_xmls(self, group_vm):
         self.logger.debug('Start method: make_libvirt_xmls of Group VM[%s]' % group_vm.group_name())
-        hypervisor_type = self.config.hypervisor_type()
+        hypervisor_type = self.config().hypervisor_type()
         for subid in group_vm.subids():
             prototype = group_vm.vm_prototype(subid)
             vm_dir = self.vm_dir(group_vm, subid)
             vm_name = group_vm.vm_name(subid)
             xml_filename = vm_name + '.xml'
             xml_fullpath = os.path.join(vm_dir, xml_filename)
-            image_fullpath = os.path.join(vm_dir, self.config.prototype_filename(prototype))
-            kernel_fullpath = os.path.join(vm_dir, self.config.kernel_filename(prototype))
+            image_fullpath = os.path.join(vm_dir, self.config().prototype_filename(prototype))
+            kernel_fullpath = os.path.join(vm_dir, self.config().kernel_filename(prototype))
             libvirt_config.make_libvirt_config(hypervisor_type, xml_fullpath, vm_name,
                                                group_vm.vm_cpu(subid), group_vm.vm_memory(subid),
                                                image_fullpath, kernel_fullpath)
 
     def boot_vm(self, xml_fullpath):
         self.logger.debug('Start method: boot_vm of xml fullpath[%s]' % xml_fullpath)
-        session = libvirt.open(self.config.libvirt_connection_uri())
+        session = libvirt.open(self.config().libvirt_connection_uri())
         with open(xml_fullpath, 'r') as f:
             xml_desc = f.read()
         domain = session.createXML(xml_desc, libvirt.VIR_DOMAIN_NONE)
@@ -304,28 +308,3 @@ class BootVmConfig:
         return helper.concat_path(self.repository_dir(self.RESOURCE_KERNEL), self.kernel_filename(prototype))
     def kernel_url_by_version(self, kernel_version):
         return helper.concat_path(self.repository_dir(self.RESOURCE_KERNEL), self.kernel_filename_by_version(kernel_version))
-
-if __name__ == '__main__':
-    vm_para = {
-        'prototype': PROTOTYPE_GENTOO,
-        'cpu': '1',
-        'memory': '1024',
-        'disk': '8',
-    }
-    vm_para2 = {
-        'prototype': PROTOTYPE_UBUNTU_12_04,
-        'cpu': '1',
-        'memory': '1024',
-        'disk': '8',
-    }
-    vms_parameters = {
-        0: vm_para.copy(),
-        1: vm_para.copy(),
-        2: vm_para2.copy(),
-    }
-    boot_depend = [[0], [1, 2]]
-    username = 'ot32em'
-    groupid = '3'
-
-    bgv = BootGroupVm('deploy.cfg.py')
-    bgv.boot(username, groupid, vms_parameters, boot_depend)
