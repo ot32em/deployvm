@@ -38,7 +38,7 @@ class DeployTest(unittest.TestCase):
         self.c = self.b.config()
 
     def tearDown(self):
-        self.bgv.rollback(self.g)
+        self.b.rollback(self.g)
 
     def test_vm_dir(self):
         b = self.bgv
