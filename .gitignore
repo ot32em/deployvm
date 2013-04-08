@@ -4,4 +4,5 @@ vms/*
 cloud/*
 ubuntu/*
 *.img
+.idea
 .idea/*
