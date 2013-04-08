@@ -65,24 +65,29 @@ class BootGroupVm(object):
         # Do something after booting, it is not implemented yet.
         self.post_booting(group_vm)
 
-    def rollback(self, group_vm):
-        self.logger.debug("Start to rollback.")
-        failed_dirname = self.failed_log_dirname(group_vm)
-        failed_dir = os.path.join( self.config().failed_log_dir(), failed_dirname)
-        if not os.path.exists(failed_dir):
-            os.makedirs(failed_dir)
-        self.logger.debug("Failed records will be created under the folder: %s" % failed_dir )
+    def failed_rollback(self, group_vm):
+        self.rollback(group_vm, True)
+
+    def rollback(self, group_vm, backup=False):
+        self.logger.debug("Start to rollback group_vm: [%s]" % group_vm.group_name())
+        if backup:
+            failed_dirname = self.failed_log_dirname(group_vm)
+            failed_dir = os.path.join( self.config().failed_log_dir(), failed_dirname)
+            if not os.path.exists(failed_dir):
+                os.makedirs(failed_dir)
+            self.logger.debug("Failed records will be created under the folder: %s" % failed_dir )
 
         running_names = self.libvirt_running_names()
         for subid in group_vm.subids():
             vm_dir = self.vm_dir(group_vm, subid)
-            # mv libvirt config to fail_boot_log/timestamp-groupname-backup
-            xml_filename = group_vm.vm_name(subid) + '.xml'
-            xml_filepath = os.path.join(vm_dir, xml_filename)
-            if os.path.exists(xml_filepath):
-                self.logger.debug("VM libvirt xml[%s] was found. Ready to backup it." % (xml_filename))
-                shutil.move(xml_filepath, os.path.join(failed_dir, xml_filename))
-                self.logger.debug("Backuped vm libvirt xml[%s] from [%s] to [%s]" % (xml_filename, vm_dir, failed_dir))
+            if backup:
+                # mv libvirt config to fail_boot_log/timestamp-groupname-backup
+                xml_filename = group_vm.vm_name(subid) + '.xml'
+                xml_filepath = os.path.join(vm_dir, xml_filename)
+                if os.path.exists(xml_filepath):
+                    self.logger.debug("VM libvirt xml[%s] was found. Ready to backup it." % (xml_filename))
+                    shutil.move(xml_filepath, os.path.join(failed_dir, xml_filename))
+                    self.logger.debug("Backuped vm libvirt xml[%s] from [%s] to [%s]" % (xml_filename, vm_dir, failed_dir))
             # delete and clear directory
             if os.path.exists(vm_dir):
                 self.logger.debug("VM dir[%s] was found. Ready to remove it." % vm_dir)
