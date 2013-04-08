@@ -103,9 +103,16 @@ class DeployTest(unittest.TestCase):
 
 
     def test_boot(self):
+
         g = self.sample_group_vm
         d = self.dgv
+        changed_config = {
+            'download_method': DOWNLOAD_METHOD_BITTORRENT,
+        }
+
+        d.overwrite_config( changed_config)
         d.boot(g,[[1,2]])
+
 
         s = libvirt.open(d.config().libvirt_connection_uri())
         names = d.libvirt_running_names()
@@ -119,8 +126,4 @@ class DeployTest(unittest.TestCase):
                 domain.destroy()
             vm_dir = d.vm_dir(g, subid)
             shutil.rmtree(vm_dir)
-
-
-    def test_post_booting(self):
-        pass
 
