@@ -1,3 +1,4 @@
+
 ''' config part '''
 def load_variables(filename):
     vars = {}
