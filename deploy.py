@@ -65,7 +65,7 @@ class BootGroupVm(object):
         failed_dirname = self.failed_log_dirname(group_vm)
         failed_dir = os.path.join( self.config().failed_log_dir(), failed_dirname)
         if not os.path.exists(failed_dir):
-            os.mkdir(failed_dir)
+            os.makedirs(failed_dir)
         self.logger.debug("Failed records will be created under the folder: %s" % failed_dir )
 
         for subid in group_vm.subids():
@@ -94,7 +94,7 @@ class BootGroupVm(object):
                 pass
 
     def failed_log_dirname(self, group_vm):
-        timestamp = time.strftime("%y%m%d %H:%M:%S")
+        timestamp = time.strftime("%y%m%d-%H:%M:%S")
         return "%s-%s" % (timestamp, group_vm.group_name())
 
 
