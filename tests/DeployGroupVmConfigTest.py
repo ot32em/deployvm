@@ -1,5 +1,5 @@
 __author__ = 'OT Chen'
-import logger
+import logging
 import unittest
 from constant import *
 import deployGroupVmConfig
@@ -41,7 +41,7 @@ class DeployGroupVmConfigTest(unittest.TestCase):
             'hypervisor_type': HYPERVISOR_TYPE_KVM,
             'download_method':DOWNLOAD_METHOD_BITTORRENT,
             'libvirt_connection_uri':'kvm://root@localhost',
-            'log_level': logger.ERROR,
+            'log_level': logging.ERROR,
             'deploy_root': '/var/',
             'repository_url': 'http://www.google.com'
         }
