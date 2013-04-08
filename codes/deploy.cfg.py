@@ -8,8 +8,9 @@ hypervisor_type = HYPERVISOR_TYPE_XEN
 libvirt_connection_uri = 'xen:///'
 
 deploy_root="/var/www/localhost/htdocs/vm/cloud/"
-deploy_user_data_dir = deploy_root + "user_data/"
-download_dir = deploy_root + "tmp/download/"
+user_data_dirname = "user_data/"
+download_dirname = "tmp/download/"
+failed_log_dirname = "failed_log/"
 
 repository_url="http://140.112.31.168/vm/"
 repository_prototype_dirname = 'prototype/'
@@ -19,15 +20,15 @@ repository_torrent_dirname = 'torrent/'
 
 ''' vm image setting '''
 prototype_filenames = {
-    PROTOTYPE_GENTOO: '1mb.img', #'gentoo-prototype.img',
-    PROTOTYPE_UBUNTU_12_04 : '1mb.img', #"ubuntu-prototype.img",
+    PROTOTYPE_GENTOO: 'gentoo-prototype.img',
+    PROTOTYPE_UBUNTU_12_04 : "ubuntu-prototype.img",
     PROTOTYPE_HADOOP_MASTER : "hadoop-master-prototype.img",
     PROTOTYPE_HADOOP_SLAVE : "hadoop-slave-prototype.img",
     PROTOTYPE_APACHE : "apache.img",
     PROTOTYPE_UBUNTU_9_04 : 'N/A',
 }
 
-prototype_dir_names = {
+prototype_names = {
     PROTOTYPE_GENTOO: 'gentoo',
     PROTOTYPE_UBUNTU_12_04 : 'ubuntu',
     PROTOTYPE_HADOOP_MASTER : 'hadoop',

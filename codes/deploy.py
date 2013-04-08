@@ -6,6 +6,7 @@
 #      config of the subid.
 #
 import helper
+import time
 import libvirt_config
 import libvirt
 import os
@@ -17,14 +18,17 @@ import logging
 
 
 class BootGroupVm(object):
-    def __init__(self, config_filename):
+    def __init__(self, config_filename='deploy.cfg.py'):
         self.config = BootVmConfig(config_filename)
-        self.setup_logger( config_filename)
+        self.setup_logger(config_filename)
+
+    def overwrite_config(self, new_dictionary):
+        self.config.overwrite(new_dictionary)
 
     def setup_logger(self, logger_filename):
         self.logger = logging.getLogger( logger_filename)
         self.logger.setLevel( self.config.log_level() )
-        file_handler = logging.FileHandler( './log/' + logger_filename + '.log')
+        file_handler = logging.FileHandler('./log/' + logger_filename + '.log')
         file_handler.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler()
         self.logger.addHandler(file_handler)
@@ -49,15 +53,57 @@ class BootGroupVm(object):
         for i_round in boot_depend:
             for subid in i_round:
                 xml_filename = group_vm.vm_name(subid) + '.xml'
-                xml_fullpath = os.path.join(self.vm_dir_fullpath(group_vm, subid),  xml_filename)
+                xml_fullpath = os.path.join(self.vm_dir(group_vm, subid),  xml_filename)
                 self.boot_vm(xml_fullpath)
         # Do something after booting, it is not implemented yet.
         self.post_booting(group_vm)
 
-    def vm_dir_fullpath(self, group_vm, subid):
+    def rollback(self, group_vm):
+        self.logger.debug("Start to rollback.")
+        timestamp = time.strftime("%y%m%d %H:%M:%S")
+
+        failed_dirname = "%s-%s" % (timestamp, group_vm.group_name())
+        failed_dir = self.make_failed_log_dir(failed_dirname)
+        self.logger.debug("Failed records will be created under the folder: %s" % failed_dir )
+
+        for subid in group_vm.subids():
+            vm_dir = self.vm_dir(group_vm, subid)
+            # mv libvirt config to fail_boot_log/timestamp-groupname-backup
+            xml_filename = group_vm.vm_name() + '.xml'
+            xml_filepath = os.path.join(vm_dir, xml_filename)
+            if os.path.exists(xml_filepath):
+                self.logger.debug("VM libvirt xml[%s] was found. Ready to backup it." % (xml_filename, vm_dir, failed_dir))
+                shutil.move(xml_filepath, os.path.join( failed_dir, xml_filename))
+                self.logger.debug("Backuped vm libvirt xml[%s] from [%s] to [%s]" % (xml_filename, vm_dir, failed_dir))
+            # delete and clear directory
+            if os.path.exists(vm_dir):
+                self.logger.debug("VM dir[%s] was found. Ready to remove it." % vm_dir)
+                shutil.rmtree(vm_dir)
+                self.logger.debug("Removed vm dir[%s]." % vm_dir)
+
+            # destroy vm
+            vm_name = group_vm.vm_name(subid)
+            try:
+                session = libvirt.open(self.config.libvirt_connection_uri())
+                d = session.lookupByName(vm_name)
+                d.destroy()
+                self.logger.debug("VM %s has beend destroied." % vm_name )
+            except libvirt.libvirtError:
+                pass
+
+
+
+
+    def make_failed_log_dir(self, dirname):
+        failed_dir = os.path.join(self.config.failed_log_dir(), dirname)
+        if not os.path.exists(failed_dir):
+            os.mkdir(failed_dir)
+        return failed_dir
+
+    def vm_dir(self, group_vm, subid):
         prototype = group_vm.vm_prototype(subid)
-        deploy_prototype_fullpath = self.config.deploy_prototype_fullpath(prototype)
-        return group_vm.vm_dir_fullpath(deploy_prototype_fullpath, subid)
+        deploy_prototype_fullpath = self.config.deploy_prototype_dir(prototype)
+        return group_vm.vm_dir(deploy_prototype_fullpath, subid)
 
     def group_vm_download_dir(self, group_vm):
         return os.path.join(self.config.download_dir(), group_vm.group_name())
@@ -79,9 +125,9 @@ class BootGroupVm(object):
 
     def download_image(self, prototype, download_dir, method):
         self.logger.debug('Start method: download_image of prototype [%s], download_dir[%s], and method[%s]' % \
-                          ( self.config.prototype_dir_name(prototype), download_dir, method) )
+                          ( self.config.prototype_name(prototype), download_dir, method) )
         if not os.path.exists( download_dir ):
-            self.logger.debug("Directory[%s] does not exist, ready to mkdir it" % download_dir )
+            self.logger.debug("Directory[%s] does not exist, ready to mkdir it" % download_dir)
             os.makedirs(download_dir)
         if method == DOWNLOAD_METHOD_UNICAST:
             # directly download
@@ -97,7 +143,7 @@ class BootGroupVm(object):
     def make_directories(self, group_vm):
         self.logger.debug('Start method: make_directries of Group VM[%s]' % group_vm.group_name())
         for subid in group_vm.subids():
-            vm_dir_fullpath = self.vm_dir_fullpath(group_vm, subid)
+            vm_dir_fullpath = self.vm_dir(group_vm, subid)
             if not os.path.exists(vm_dir_fullpath):
                 os.makedirs(vm_dir_fullpath)
 
@@ -105,7 +151,7 @@ class BootGroupVm(object):
         self.logger.debug('Start method: copy_images of Group VM[%s]' % group_vm.group_name())
         download_dir = self.group_vm_download_dir(group_vm)
         for subid in group_vm.subids():
-            vm_dir_fullpath = self.vm_dir_fullpath(group_vm, subid)
+            vm_dir_fullpath = self.vm_dir(group_vm, subid)
             prototype = group_vm.vm_prototype(subid)
             # copy prototype image
             prototype_filename = self.config.prototype_filename(prototype)
@@ -122,7 +168,7 @@ class BootGroupVm(object):
         self.logger.debug('Start method: resize_images of Group VM[%s]' % group_vm.group_name())
         for subid in group_vm.subids():
             prototype_filename = self.config.prototype_filename(group_vm.vm_prototype(subid))
-            vm_dir_fullpath = self.vm_dir_fullpath(group_vm, subid)
+            vm_dir_fullpath = self.vm_dir(group_vm, subid)
             new_size = group_vm.vm_disk(subid)
             prototype_fullpath = os.path.join(vm_dir_fullpath, prototype_filename)
             cmd = "resize2fs {image} {GBs}G".format(image=prototype_fullpath, GBs=new_size)
@@ -133,7 +179,7 @@ class BootGroupVm(object):
         hypervisor_type = self.config.hypervisor_type()
         for subid in group_vm.subids():
             prototype = group_vm.vm_prototype(subid)
-            vm_dir = self.vm_dir_fullpath(group_vm, subid)
+            vm_dir = self.vm_dir(group_vm, subid)
             vm_name = group_vm.vm_name(subid)
             xml_filename = vm_name + '.xml'
             xml_fullpath = os.path.join(vm_dir, xml_filename)
@@ -160,31 +206,42 @@ class BootGroupVm(object):
 
 class BootVmConfig:
     def __init__(self, config_filename):
-        config = helper.load_variables(config_filename)
         self.config_filename = config_filename
-        self.config_variable = config
+        self.config_dictionary = helper.load_variables(config_filename)
+        self.load_dictionary()
 
+    def overwrite(self, new_dictionary):
+        self.config_dictionary.update(new_dictionary)
+        self.reload_dictionary()
+
+    def reload_dictionary(self): # a alias method
+        self.load_dictionary()
+
+    def load_dictionary(self):
+        config = self.config_dictionary
         self._log_level = config['log_level']
-
         self._hypervisor_type = config['hypervisor_type']
         self._libvirt_connection_uri = config['libvirt_connection_uri']
         self._download_method = config['download_method']
 
         self._deploy_root = config['deploy_root']
-        self._user_data_dir = config['deploy_user_data_dir']
-        self._download_dir = config['download_dir']
+        self._user_data_dirname = config['user_data_dirname']
+        self._failed_log_dirname = config['failed_log_dirname']
+        self._download_dirname = config['download_dirname']
+
         self._repository_url = config['repository_url']
 
         self._use_kernel_map = config['use_kernel']
-        self._prototype_dir_names = config['prototype_dir_names']
+        self._prototype_names = config['prototype_names']
 
         self.RESOURCE_PROTOTYPE = 0
         self.RESOURCE_KERNEL = 1
         self.RESOURCE_TORRENT = 2
-        self._resource_directory_urls = {
-            self.RESOURCE_PROTOTYPE: config['repository_url'] + config['repository_prototype_dirname'],
-            self.RESOURCE_KERNEL:  config['repository_url'] + config['repository_kernel_dirname'],
-            self.RESOURCE_TORRENT: config['repository_url'] + config['repository_torrent_dirname'],
+
+        self._repository_dirnames = {
+            self.RESOURCE_PROTOTYPE: config['repository_prototype_dirname'],
+            self.RESOURCE_KERNEL: config['repository_kernel_dirname'],
+            self.RESOURCE_TORRENT: config['repository_torrent_dirname'],
         }
 
         self._resource_filenames = {
@@ -193,58 +250,60 @@ class BootVmConfig:
             self.RESOURCE_TORRENT: config['torrent_filenames'],
         }
 
+    # Meta Data
     def log_level(self):
         return self._log_level
-
-    def download_dir(self):
-        return self._download_dir
-
     def download_method(self):
         return self._download_method
-
     def hypervisor_type(self):
         return self._hypervisor_type
-
     def libvirt_connection_uri(self):
         return self._libvirt_connection_uri
 
-    def prototype_dir_name(self, prototype):
-        return self._prototype_dir_names[prototype]
-
-    def deploy_prototype_fullpath(self, prototype):
-        return os.path.join(self._user_data_dir, self.prototype_dir_name(prototype))
-
-    def resource_filename(self, resource_type, resource_name):
-        return self._resource_filenames[resource_type][resource_name]
-
-    def prototype_filename(self, prototype):
-        return self.resource_filename(self.RESOURCE_PROTOTYPE, prototype)
-
-    def prototype_url(self, prototype):
-        return self._resource_directory_urls[self.RESOURCE_PROTOTYPE] + self.prototype_filename(prototype)
-
-    def torrent_filename(self, prototype):
-        return self._resource_filenames[self.RESOURCE_TORRENT][prototype]
-
-    def torrent_url(self, prototype):
-        return self._resource_directory_urls[self.RESOURCE_TORRENT] + self.torrent_filename(prototype)
-
-    def kernel_filename(self, prototype):
-        kernel_version = self._use_kernel_map[prototype]
-        return self._kernel_filename_by_version(kernel_version)
-
-    def kernel_url(self, prototype):
-        kernel_version = self.kernel_version(prototype)
-        return self._kernel_filename_by_version(kernel_version)
-
-    def _kernel_filename_by_version(self, kernel_version):
-        return self.resource_filename(self.RESOURCE_KERNEL, kernel_version)
-
-    def kernel_url_by_version(self, kernel_version):
-        return self._resource_directory_urls[self.RESOURCE_KERNEL] + self.kernel_filename(kernel_version)
-
+    # Normal Map
+    def prototype_name(self, prototype):
+        return self._prototype_names[prototype]
     def kernel_version(self, prototype):
         return self._use_kernel_map[prototype]
+
+    # General Direcotry
+    def deploy_dir(self):
+        return self._deploy_root
+    def user_data_dir(self):
+        return os.path.join(self.deploy_dir(), self._user_data_dirname)
+    def download_dir(self):
+        return os.path.join(self.deploy_dir(), self._download_dirname)
+    def failed_log_dir(self):
+        return os.path.join(self.deploy_dir(), self._failed_log_dirname)
+    def deploy_prototype_dir(self, prototype):
+        return os.path.join(self.user_data_dir(), self.prototype_name(prototype))
+
+    # Resource Filename Getter
+    def resource_filename(self, resource_type, resource_key):
+        return self._resource_filenames[resource_type][resource_key]
+    def prototype_filename(self, prototype):
+        return self.resource_filename(self.RESOURCE_PROTOTYPE, prototype)
+    def torrent_filename(self, prototype):
+        return self.resource_filename(self.RESOURCE_TORRENT, prototype)
+    def kernel_filename_by_version(self, kernel_version):
+        return self.resource_filename(self.RESOURCE_KERNEL, kernel_version)
+    def kernel_filename(self, prototype):
+        kernel_version = self.kernel_version(prototype)
+        return self.kernel_filename_by_version(kernel_version)
+
+    # Resource URL Getter
+    def repository_url(self):
+        return self._repository_url
+    def repository_dir(self, resource_type):
+        return helper.concat_path(self.repository_url(), self._repository_dirnames[resource_type])
+    def prototype_url(self, prototype):
+        return helper.concat_path(self.repository_dir(self.RESOURCE_PROTOTYPE), self.prototype_filename(prototype))
+    def torrent_url(self, prototype):
+        return helper.concat_path(self.repository_dir(self.RESOURCE_TORRENT), self.torrent_filename(prototype))
+    def kernel_url(self, prototype):
+        return helper.concat_path(self.repository_dir(self.RESOURCE_KERNEL), self.kernel_filename(prototype))
+    def kernel_url_by_version(self, kernel_version):
+        return helper.concat_path(self.repository_dir(self.RESOURCE_KERNEL), self.kernel_filename_by_version(kernel_version))
 
 if __name__ == '__main__':
     vm_para = {
