@@ -1,3 +1,5 @@
+import os
+import errno
 
 ''' config part '''
 def load_variables(filename):
@@ -36,3 +38,15 @@ def concat_path(*args):
             string = token
     return string
 
+
+def mkdir_p(path):
+    '''
+    @ref http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
+    '''
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise IOError("Can not make the path: %s" % path)

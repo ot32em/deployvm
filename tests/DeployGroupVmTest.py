@@ -3,81 +3,92 @@ import groupVm
 from constant import *
 import unittest
 import os
+import helper
+import tempfile
+import libvirt_config
+
 
 
 class DeployTest(unittest.TestCase):
     def setUp(self):
-        self.b = deployGroupVm.DeployGroupVm()
-        test_config = {}
-        test_config['prototype_filenames']= {
-            PROTOTYPE_GENTOO:'100mb.img',
-            PROTOTYPE_APACHE:'100mb.img',
-            PROTOTYPE_UBUNTU_12_04:'100mb.img',
-        }
-        self.b.overwrite_config(test_config)
-        vm_para = {
+        self.dgv = deployGroupVm.DeployGroupVm()
+        self.gentoo_normal_vm_para = {
             'prototype': PROTOTYPE_GENTOO,
             'cpu': '1',
             'memory': '1024',
             'disk': '8',
         }
-        vm_para2 = {
+        self.ubuntu_normal_vm_para = {
             'prototype': PROTOTYPE_UBUNTU_12_04,
             'cpu': '1',
             'memory': '1024',
             'disk': '8',
         }
-        vms_parameters = {
-            0: vm_para.copy(),
-            1: vm_para.copy(),
-            2: vm_para2.copy(),
+        self.sample_vms_paras = {
+            1: self.gentoo_normal_vm_para,
+            2: self.ubuntu_normal_vm_para,
         }
-        self.boot_depend = [[0], [1, 2]]
-        username = 'ot32em'
-        groupid = '3'
-        self.g = groupVm.GroupVm(username, groupid, vms_parameters)
-        self.c = self.b.config()
+        self.sample_username = 'ot32em'
+        self.sample_groupid = '3'
+        self.fake_prototype_filename_config = { # avoid download 3.2G image taking so long time
+            'prototype_filenames': {
+                PROTOTYPE_GENTOO:'100mb.img',
+                PROTOTYPE_APACHE:'100mb.img',
+                PROTOTYPE_UBUNTU_12_04:'100mb.img',
+            }
+        }
+        self.sample_group_vm = groupVm.GroupVm(self.sample_username, self.sample_groupid, self.sample_vms_paras)
 
-    def tearDown(self):
-        self.b.rollback(self.g)
 
     def test_vm_dir(self):
-        for subid in self.g.subids():
+        c = self.dgv.config()
+        g = self.sample_group_vm
+        for subid in g.subids():
             expected_vm_dir = '{userdata_dir}/{prototype}/{username}/{vm_name}'.format(
-            userdata_dir = self.c.user_data_dir(),
-            prototype = self.c.prototype_name(self.g.vm_prototype(subid)),
-            username = self.g.username(),
-            vm_name = self.g.vm_name(subid) )
-            self.assertEqual( expected_vm_dir, self.b.vm_dir(self.g, subid))
+                userdata_dir = c.user_data_dir(),
+                prototype = c.prototype_name(g.vm_prototype(subid)),
+                username = g.username(),
+                vm_name = g.vm_name(subid)
+            )
+            result_vm_dir = self.dgv.vm_dir(g, subid)
+            self.assertEqual(expected_vm_dir, result_vm_dir)
 
     def test_group_vm_download_dir(self):
-        expected_dir = '{download_dir}/{group_name}'.format(
-            download_dir = self.c.download_dir(),
-            group_name = self.g.group_name()
+        c = self.dgv.config()
+        g = self.sample_group_vm
+        expected_dir = helper.concat_path(
+            c.download_dir(),
+            g.group_name()
         )
-        self.assertEqual( expected_dir, self.b.group_vm_download_dir(self.g))
-
-    def test_config_prototype_url(self):
-        expected_url = 'http://140.112.31.168/vm/prototype/100mb.img'
-        result_url = self.c.prototype_url(PROTOTYPE_GENTOO)
-        self.assertEqual( expected_url, result_url)
-
-
+        result_dir = self.dgv.group_download_dir(g)
+        self.assertEqual( expected_dir, result_dir )
 
     def test_download_image(self):
-        pass
-        for subid in self.g.subids():
-            prototype = self.g.vm_prototype(subid)
-            download_dir = self.b.group_vm_download_dir(self.g)
-            method = self.c.download_method()
-            prototype_filename = self.c.prototype_filename(prototype)
-            self.b.download_image(prototype, download_dir, method)
+        c = self.dgv.config()
+        g = self.sample_group_vm
+        self.dgv.overwrite_config(self.fake_prototype_filename_config)
+        for subid in g.subids():
+            prototype = g.vm_prototype(subid)
+            download_dir = self.dgv.group_download_dir(g)
+            method = c.download_method()
+            prototype_filename = c.prototype_filename(prototype)
+
+            self.dgv.download_image(prototype, download_dir, method)
+
             expected_filepath = os.path.join(download_dir, prototype_filename)
             self.assertTrue( os.path.exists( expected_filepath ))
 
 
     def test_make_directories(self):
-        pass
+        self.dgv.make_directories(self.sample_group_vm)
+
+        download_dir = self.dgv.group_download_dir(self.sample_group_vm)
+        result = os.path.exists(download_dir)
+        self.assertTrue(result)
+        for subid in self.sample_group_vm.subids():
+            vm_dir = self.dgv.vm_dir(self.sample_group_vm, subid)
+            result = os.path.exists(vm_dir)
+            self.assertTrue(result)
 
     def test_copy_images(self):
         pass
@@ -88,8 +99,29 @@ class DeployTest(unittest.TestCase):
     def test_make_libvirt_xmls(self):
         pass
 
+
     def test_boot_vm(self):
-        pass
+        g = self.sample_group_vm
+        d = self.dgv
+        c = d.config()
+        p = g.vm_prototype(1)
+
+        d.make_directories(g)
+        d.download_images(g)
+        d.copy_images(g)
+        d.make_libvirt_xmls(g)
+
+        for subid in g.subids():
+            xml_path = os.path.join( d.vm_dir(g, subid), g.vm_name(subid) + '.xml')
+            d.boot_vm(xml_path)
+
+        names = d.libvirt_running_names()
+        for subid in g.subids():
+            name = g.vm_name(subid)
+            self.assertIn(name, names)
+
+
 
     def test_post_booting(self):
         pass
+

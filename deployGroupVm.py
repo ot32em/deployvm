@@ -52,12 +52,13 @@ class DeployGroupVm(object):
         @ type boot_depend list
         '''
 
+        # make vm directory, download dir for group
+        self.make_directories(group_vm)
         # Downloading Big Files: Prototype image, usually 500MB~3000MB via bt or unicast, then deploy to each vm folder
         # via local copying files .
         self.download_images(group_vm)
         # Setup each components for VM creation: folder, prototype image, kernel image, resize disk, and booting xml
         # config.
-        self.make_directories(group_vm)
         self.copy_images(group_vm)
         self.resize_images(group_vm)
         self.make_libvirt_xmls(group_vm)
@@ -122,12 +123,9 @@ class DeployGroupVm(object):
             names.append(v.name())
         return names
 
-
-
     def failed_log_dirname(self, group_vm):
         timestamp = time.strftime("%y%m%d-%H:%M:%S")
         return "%s-%s" % (timestamp, group_vm.group_name())
-
 
     def make_failed_log_dir(self, dirname):
         failed_dir = os.path.join(self.config().failed_log_dir(), dirname)
@@ -144,14 +142,14 @@ class DeployGroupVm(object):
         deploy_prototype_fullpath = self.config().deploy_prototype_dir(prototype)
         return group_vm.vm_dir(deploy_prototype_fullpath, subid)
 
-    def group_vm_download_dir(self, group_vm):
+    def group_download_dir(self, group_vm):
         return os.path.join(self.config().download_dir(), group_vm.group_name())
 
     def download_images(self, group_vm):
         self.logger.debug('Start method: download_images of Group VM[%s]' % group_vm.group_name())
         method = self.config().download_method()
         unique_prototypes = group_vm.unique_prototypes()
-        download_dir = self.group_vm_download_dir(group_vm)
+        download_dir = self.group_download_dir(group_vm)
         # download prototypes
         unique_kernel_versions = set()
         for prototype in unique_prototypes:
@@ -181,27 +179,34 @@ class DeployGroupVm(object):
 
     def make_directories(self, group_vm):
         self.logger.debug('Start method: make_directries of Group VM[%s]' % group_vm.group_name())
+        download_dir = self.group_download_dir(group_vm)
+        helper.mkdir_p(download_dir)
         for subid in group_vm.subids():
-            vm_dir_fullpath = self.vm_dir(group_vm, subid)
-            if not os.path.exists(vm_dir_fullpath):
-                os.makedirs(vm_dir_fullpath)
+            self.make_vm_directory(group_vm, subid)
+
+    def make_vm_directory(self, group_vm, subid):
+        vm_dir = self.vm_dir(group_vm, subid)
+        helper.mkdir_p(vm_dir)
 
     def copy_images(self, group_vm):
         self.logger.debug('Start method: copy_images of Group VM[%s]' % group_vm.group_name())
-        download_dir = self.group_vm_download_dir(group_vm)
         for subid in group_vm.subids():
-            vm_dir_fullpath = self.vm_dir(group_vm, subid)
-            prototype = group_vm.vm_prototype(subid)
-            # copy prototype image
-            prototype_filename = self.config().prototype_filename(prototype)
-            prototype_src_fullpath = os.path.join(download_dir, prototype_filename)
-            prototype_dest_fullpath = os.path.join(vm_dir_fullpath, prototype_filename)
-            shutil.copy2(prototype_src_fullpath, prototype_dest_fullpath)
-            # copy kernel image
-            kernel_filename = self.config().kernel_filename(prototype)
-            kernel_src_fullpath = os.path.join(download_dir, kernel_filename)
-            kernel_dest_fullpath = os.path.join(vm_dir_fullpath, kernel_filename)
-            shutil.copy2(kernel_src_fullpath, kernel_dest_fullpath)
+            self.copy_vm_image(group_vm, subid)
+
+    def copy_vm_image(self, group_vm, subid):
+        download_dir = self.group_download_dir(group_vm)
+        vm_dir_fullpath = self.vm_dir(group_vm, subid)
+        prototype = group_vm.vm_prototype(subid)
+        # copy prototype image
+        prototype_filename = self.config().prototype_filename(prototype)
+        prototype_src_fullpath = os.path.join(download_dir, prototype_filename)
+        prototype_dest_fullpath = os.path.join(vm_dir_fullpath, prototype_filename)
+        shutil.copy2(prototype_src_fullpath, prototype_dest_fullpath)
+        # copy kernel image
+        kernel_filename = self.config().kernel_filename(prototype)
+        kernel_src_fullpath = os.path.join(download_dir, kernel_filename)
+        kernel_dest_fullpath = os.path.join(vm_dir_fullpath, kernel_filename)
+        shutil.copy2(kernel_src_fullpath, kernel_dest_fullpath)
 
     def resize_images(self, group_vm):
         self.logger.debug('Start method: resize_images of Group VM[%s]' % group_vm.group_name())
@@ -212,6 +217,7 @@ class DeployGroupVm(object):
             prototype_fullpath = os.path.join(vm_dir_fullpath, prototype_filename)
             cmd = "resize2fs {image} {GBs}G".format(image=prototype_fullpath, GBs=new_size)
             os.system(cmd)
+
 
     def make_libvirt_xmls(self, group_vm):
         self.logger.debug('Start method: make_libvirt_xmls of Group VM[%s]' % group_vm.group_name())
