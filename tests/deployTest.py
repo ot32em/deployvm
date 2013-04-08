@@ -65,6 +65,7 @@ class DeployTest(unittest.TestCase):
 
 
     def test_download_image(self):
+        pass
         for subid in self.g.subids():
             prototype = self.g.vm_prototype(subid)
             download_dir = self.b.group_vm_download_dir(self.g)
