@@ -69,7 +69,7 @@ class BootGroupVm(object):
         self.rollback(group_vm, True)
 
     def rollback(self, group_vm, backup=False):
-        self.logger.debug("Start to rollback group_vm: [%s]" % group_vm.group_name())
+        self.logger.info("Start to rollback group_vm: [%s]" % group_vm.group_name())
         if backup:
             failed_dirname = self.failed_log_dirname(group_vm)
             failed_dir = os.path.join( self.config().failed_log_dir(), failed_dirname)
