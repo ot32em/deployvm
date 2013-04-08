@@ -1,5 +1,5 @@
 import deployGroupVm
-import GroupVm
+import groupVm
 from constant import *
 import unittest
 import os
@@ -35,7 +35,7 @@ class DeployTest(unittest.TestCase):
         self.boot_depend = [[0], [1, 2]]
         username = 'ot32em'
         groupid = '3'
-        self.g = GroupVm.GroupVm(username, groupid, vms_parameters)
+        self.g = groupVm.GroupVm(username, groupid, vms_parameters)
         self.c = self.b.config()
 
     def tearDown(self):
