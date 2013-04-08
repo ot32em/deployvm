@@ -84,8 +84,3 @@ class HelperTest(unittest.TestCase):
         # case 5: bad arguments occurs Attribute Error
         self.assertRaises(AttributeError, helper.concat_path, '/var') # only 1 argument
         self.assertRaises(AttributeError, helper.concat_path, '/var','/log') # second argument with leading slash
-
-
-
-
-
