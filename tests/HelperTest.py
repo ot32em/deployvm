@@ -7,12 +7,13 @@ import os
 class HelperTest(unittest.TestCase):
     def test_load_variables(self):
         tmpdir_path = tempfile.mktemp()
+        os.mkdir(tmpdir_path)
         filepath = os.path.join( tmpdir_path, 'test_load_variables.py')
         lines = []
-        lines.append('a=1')
-        lines.append('b="string"')
-        lines.append('c=[1,2,3,4]')
-        lines.append('d={"key":"value"}')
+        lines.append('a=1\n')
+        lines.append('b="string"\n')
+        lines.append('c=[1,2,3,4]\n')
+        lines.append('d={"key":"value"}\n')
         with open(filepath,'w') as f:
             f.writelines(lines)
         expected_variable = {
@@ -22,6 +23,8 @@ class HelperTest(unittest.TestCase):
             'd':{'key':'value'},
         }
         result_variable = helper.load_variables(filepath)
+        os.remove(filepath)
+        os.rmdir(tmpdir_path)
         self.assertEqual( expected_variable, result_variable)
 
     def test_prepend(self):
