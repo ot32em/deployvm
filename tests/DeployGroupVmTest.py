@@ -6,6 +6,7 @@ import os
 import helper
 import tempfile
 import libvirt_config
+import libvirt
 
 
 
@@ -100,27 +101,19 @@ class DeployTest(unittest.TestCase):
         pass
 
 
-    def test_boot_vm(self):
+    def test_boot(self):
         g = self.sample_group_vm
         d = self.dgv
-        c = d.config()
-        p = g.vm_prototype(1)
+        d.boot(g,[1,2])
 
-        d.make_directories(g)
-        d.download_images(g)
-        d.copy_images(g)
-        d.make_libvirt_xmls(g)
-
-        for subid in g.subids():
-            xml_path = os.path.join( d.vm_dir(g, subid), g.vm_name(subid) + '.xml')
-            d.boot_vm(xml_path)
-
+        s = libvirt.open(d.config().libvirt_connection_uri())
         names = d.libvirt_running_names()
         for subid in g.subids():
             name = g.vm_name(subid)
             self.assertIn(name, names)
-
-
+            if name in names:
+                domain = s.lookupByName(name)
+                domain.destroy()
 
     def test_post_booting(self):
         pass
