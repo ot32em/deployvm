@@ -15,7 +15,11 @@ def prepend( prefix, walking_dict ):
     return dest_dict
 
 
-def concat_path(self,a='',b=''):
+def concat_path(a,b):
+    '''
+    @type a str
+    @type b str
+    '''
     if not a.endswith('/'):
         return ''.join([a, '/', b])
     return ''.join([a,b])
