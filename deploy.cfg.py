@@ -7,7 +7,7 @@ download_method = DOWNLOAD_METHOD_UNICAST
 hypervisor_type = HYPERVISOR_TYPE_XEN
 libvirt_connection_uri = 'xen:///'
 
-deploy_root="/var/www/localhost/htdocs/vm/cloud/"
+deploy_root="/var/www/localhost/htdocs/vm/cloud"
 user_data_dirname = "user_data"
 download_dirname = "tmp/download"
 failed_log_dirname = "failed_log"
