@@ -1,5 +1,6 @@
 __author__ = 'OT Chen'
 import helper
+import os
 
 class DeployGroupVmConfig:
     def __init__(self, config_filename='deploy.cfg.py'):

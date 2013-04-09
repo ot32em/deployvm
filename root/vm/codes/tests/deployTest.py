@@ -55,7 +55,7 @@ class DeployTest(unittest.TestCase):
             download_dir = self.c.download_dir(),
             group_name = self.g.group_name()
         )
-        self.assertEqual( expected_dir, self.b.group_vm_download_dir(self.g))
+        self.assertEqual( expected_dir, self.b.group_download_dir(self.g))
 
     def test_config_prototype_url(self):
         expected_url = 'http://140.112.31.168/vm/prototype/100mb.img'
@@ -67,7 +67,7 @@ class DeployTest(unittest.TestCase):
     def test_download_image(self):
         for subid in self.g.subids():
             prototype = self.g.vm_prototype(subid)
-            download_dir = self.b.group_vm_download_dir(self.g)
+            download_dir = self.b.group_download_dir(self.g)
             method = self.c.download_method()
             prototype_filename = self.c.prototype_filename(prototype)
             self.b.download_image(prototype, download_dir, method)
